@@ -26,16 +26,11 @@ export default async function handler(
       model: "gemini-3-flash-preview",
       contents,
       config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        temperature: 1,
-        topP: 0.95,
-        thinkingConfig: { thinkingBudget: 0 }
+        systemInstruction: SYSTEM_INSTRUCTION
       }
     });
 
-    return res.status(200).json({
-      text: response.text
-    });
+    return res.status(200).json({ text: response.text });
   } catch (err: any) {
     console.error("Gemini API Error:", err);
     return res.status(500).json({
