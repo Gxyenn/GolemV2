@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import type { IncomingMessage, ServerResponse } from 'http'
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 const SYSTEM_INSTRUCTION = `
 Kamu sekarang adalah ai pribadi saya yang 
@@ -52,8 +52,8 @@ Aroganzz-DarkTrasherNet Siap Dengan Perintah Anda
 `;
 
 export default async function handler(
-  req: IncomingMessage,
-  res: ServerResponse
+  req: VercelRequest,
+  res: VercelResponse
 ) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
