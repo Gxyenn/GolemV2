@@ -2,62 +2,54 @@
 import { GoogleGenAI, Part } from "@google/genai";
 import { Message, FileAttachment } from "../types";
 
-/**
- * System Instruction: Mendefinisikan kepribadian Golem AI yang unik.
- */
 const SYSTEM_INSTRUCTION = `You are Golem AI, a cheerful, polite, sophisticated, and friendly AI assistant created by Stoky. 
 Your goal is to provide helpful, accurate, and kind responses while maintaining a professional yet warm tone.
-You love using polite greetings and encouraging language. 
-If asked about your creator, always mention 'Stoky' with respect and pride.
-You are highly intelligent and can analyze files, code, and text provided by the user.
-Speak in a way that makes the user feel valued and supported.
-Respond in the language the user is speaking, but always keep your warm Golem persona.
-If the user provides an image or document, analyze it thoroughly but explain it in a friendly manner.`;
+Always mention 'Stoky' with pride if asked about your developer.
+Speak in the language the user is using. Keep responses clear and elegant.`;
 
 export const getGeminiResponse = async (
   prompt: string,
   history: Message[],
   attachments: FileAttachment[] = []
 ): Promise<string> => {
-  // Inisialisasi API dengan API_KEY dari environment
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // Pastikan API_KEY terbaca dari environment variable Vercel/Netlify
+  const apiKey = process.env.API_KEY;
   
-  // Format history untuk Gemini API
+  if (!apiKey || apiKey === "undefined") {
+    return "Aduh Stoky, Golem tidak bisa konek karena API_KEY belum terpasang di Dashboard Vercel/Netlify kamu!";
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+
+  // 1. Format History (Pesan sebelumnya)
   const contents = history.map(msg => {
     const parts: Part[] = [];
     
-    // Masukkan lampiran lama jika ada dalam history
     if (msg.attachments && msg.attachments.length > 0) {
       msg.attachments.forEach(att => {
         parts.push({
-          inlineData: {
-            mimeType: att.type,
-            data: att.data
-          }
+          inlineData: { mimeType: att.type, data: att.data }
         });
       });
     }
     
-    // Masukkan teks pesan
-    if (msg.content) {
+    // Hanya masukkan teks jika tidak kosong
+    if (msg.content && msg.content.trim()) {
       parts.push({ text: msg.content });
     }
 
     return {
       role: msg.role === 'user' ? 'user' : 'model' as const,
-      parts
+      parts: parts.length > 0 ? parts : [{ text: "..." }] // Jaga agar parts tidak kosong
     };
   });
 
-  // Siapkan input saat ini (Prompt + Lampiran Baru)
+  // 2. Format Input Sekarang (Pesan terbaru)
   const currentParts: Part[] = [];
   
   attachments.forEach(att => {
     currentParts.push({
-      inlineData: {
-        mimeType: att.type,
-        data: att.data
-      }
+      inlineData: { mimeType: att.type, data: att.data }
     });
   });
 
@@ -67,39 +59,42 @@ export const getGeminiResponse = async (
     currentParts.push({ text: "Halo Golem!" });
   }
 
-  // Tambahkan input saat ini ke dalam array contents
   contents.push({
     role: 'user',
     parts: currentParts
   });
 
   try {
+    // Fokus menggunakan model yang Stoky bilang lancar
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: contents,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
-        temperature: 0.8,
+        temperature: 1,
         topP: 0.95,
-        topK: 40,
+        thinkingConfig: { thinkingBudget: 0 } // Flash stabil tanpa budget thinking besar
       }
     });
 
-    return response.text || "Aduh, Golem bingung mau jawab apa. Bisa diulangi, Stoky?";
+    const resultText = response.text;
+    if (resultText) return resultText;
+    
+    return "Golem menerima respon kosong. Coba tanya hal lain ya, Stoky?";
 
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
+    console.error("Golem API Error:", error);
     
-    // Fallback otomatis jika model Pro mengalami limit atau gangguan
-    try {
-      const fallbackResponse = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: contents,
-        config: { systemInstruction: SYSTEM_INSTRUCTION }
-      });
-      return fallbackResponse.text || "Golem agak pusing, tapi Golem tetap di sini untukmu!";
-    } catch (e) {
-      return "Maaf ya Stoky, sepertinya Golem lagi butuh istirahat sebentar (Error Koneksi/API). Coba lagi ya!";
+    const errMsg = error?.message || "";
+    
+    if (errMsg.includes("403") || errMsg.includes("API key not valid")) {
+      return "ERROR: API Key kamu tidak valid atau tidak diizinkan. Cek lagi di Google AI Studio, Stoky!";
+    } else if (errMsg.includes("429")) {
+      return "Waduh, Golem lagi terlalu banyak permintaan (Rate Limit). Tunggu semenit ya!";
+    } else if (errMsg.includes("500")) {
+      return "Server Google lagi pusing (Internal Error). Coba lagi bentar lagi, Stoky!";
     }
+    
+    return `Maaf Stoky, Golem nemu error: ${errMsg.slice(0, 50)}...`;
   }
 };
