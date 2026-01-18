@@ -5,14 +5,13 @@ import LandingPage from './components/LandingPage';
 import ChatInterface from './components/ChatInterface';
 import { AppView, ChatSession } from './types';
 
-const STORAGE_KEY = 'golem_ai_chats';
+const STORAGE_KEY = 'golem_ai_chats_v2'; // Gunakan key baru untuk menghindari konflik data lama
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>(AppView.LANDING);
   const [chats, setChats] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
 
-  // Load chats on mount
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -24,9 +23,10 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Save chats on change
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+    if (chats.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+    }
   }, [chats]);
 
   const handleStartChat = () => {
@@ -71,20 +71,20 @@ const App: React.FC = () => {
         {view === AppView.LANDING ? (
           <motion.div
             key="landing"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
           >
             <LandingPage onStart={handleStartChat} />
           </motion.div>
         ) : (
           <motion.div
             key="chat"
-            initial={{ opacity: 0, scale: 1.02 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.5, ease: "circOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
           >
             <ChatInterface 
               chats={chats} 
