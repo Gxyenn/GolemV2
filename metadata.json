@@ -1,0 +1,11 @@
+{
+  "name": "Golem AI",
+  "short_name": "Golem",
+  "description": "Premium AI Assistant created by Stoky. Elegant, cheerful, and highly capable.",
+  "version": "1.0.0",
+  "author": "Stoky",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
