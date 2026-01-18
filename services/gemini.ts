@@ -93,7 +93,7 @@ export const getGeminiResponse = async (
     // Fallback otomatis jika model Pro mengalami limit atau gangguan
     try {
       const fallbackResponse = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-pro',
         contents: contents,
         config: { systemInstruction: SYSTEM_INSTRUCTION }
       });
