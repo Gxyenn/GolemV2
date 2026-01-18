@@ -23,7 +23,7 @@ export default async function handler(
     });
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-1.5-pro",
       contents,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION
